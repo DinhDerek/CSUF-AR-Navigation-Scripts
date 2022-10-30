@@ -29,15 +29,15 @@ namespace AR_Fukuoka
         public GameObject MarkerPrefab; // Data of marker display object
         GameObject displayCurrentStep; // Actual marker object to be displayed
         public ARAnchorManager AnchorManager; // Used to create anchors
-        Queue<(double latitude, double longitude, String htmlStep)> Steps; // The list of steps of the navigation
+        Queue<NavSteps> Steps; // The list of steps of the navigation
         Queue<(GameObject inter, double latitude, double longitude)> Intermediaries; // The list of intermediary arrows between points
-        (double latitude, double longitude, String htmlStep) CurrentStep; // The current step in the navigation
+        NavSteps CurrentStep; // The current step in the navigation
         (GameObject inter, double latitude, double longitude) CurrentIntermediary; // The closest arrow to the user's position
         bool Initialized; // Whether or not the navigation has begun
 
         void Start()
         {
-            Steps = new Queue<(double latitude, double longitude, String htmlStep)>();
+            Steps = new Queue<NavSteps>();
             Intermediaries = new Queue<(GameObject inter, double latitude, double longitude)>();
             Initialized = false;
         }
@@ -108,39 +108,12 @@ namespace AR_Fukuoka
 
         void getIntermediaries(GeospatialPose pose)
         {
-            // Generate the URL to make the API call
-            String baseUrl = "https://roads.googleapis.com/v1/snapToRoads";
-            String path = pose.Latitude.ToString() + "," + pose.Longitude.ToString() + "|" + CurrentStep.latitude.ToString() + "," + CurrentStep.longitude.ToString();
-            String apiKey = "AIzaSyCJv1juPlayfNG086LAUQ4rtwEDqsT7DZA";
-            String apiUrl = baseUrl + "?interpolate=true&path=" + path + "&key=" + apiKey;
-            Console.WriteLine("COMPLETE ROAD URL: " + apiUrl);
-
-            // Parse the JSON response from the URL and gather the coordinates of each intermediary point
-            Queue<(double latitude, double longitude)> interCoords = new Queue<(double latitude, double longitude)>();
-            using (var client = new WebClient())
-            {
-                string response = client.DownloadString(apiUrl);
-                if (!string.IsNullOrEmpty(response))
-                {
-                    JObject json = JObject.Parse(response);
-                    foreach (JToken jtoken in json.SelectToken("snappedPoints"))
-                    {   
-                        double lat = 0.0;
-                        double lng = 0.0;
-
-                        double.TryParse(jtoken.SelectToken("location.latitude").ToString(), out lat);
-                        double.TryParse(jtoken.SelectToken("location.longitude").ToString(), out lng);
-
-                        Console.WriteLine("INTERMEDIARY: " + lat.ToString() + ", " + lng.ToString());
-                        interCoords.Enqueue((lat, lng));
-                    }
-                }
-            }
+            Queue<Coordinates> interCoords = NavigationManager.DecodePolyline(CurrentStep.polyLine);
 
             // Loop through the queue of intermediary points and generate GameObjects from them
             while (interCoords.Count > 0)
             {
-                (double latitude, double longitude) intCoord = interCoords.Dequeue();
+                Coordinates intCoord = interCoords.Dequeue();
 
                 double heading = 0.0;
 
