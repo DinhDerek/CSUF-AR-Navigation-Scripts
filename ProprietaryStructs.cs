@@ -35,4 +35,17 @@ namespace AR_Fukuoka
             this.polyLine = polyLine;
         }
     }
+
+    public struct IntermediaryPoint
+    {
+        public GameObject inter;
+        public double latitude;
+        public double longitude;
+        public IntermediaryPoint(GameObject inter, double latitude, double longitude)
+        {
+            this.inter = inter;
+            this.latitude = latitude; 
+            this.longitude = longitude; 
+        }
+    }
 }

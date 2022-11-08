@@ -14,7 +14,6 @@ namespace AR_Fukuoka
     {
         static String apiKey = "AIzaSyCJv1juPlayfNG086LAUQ4rtwEDqsT7DZA";
         static String baseNavigationUrl = "https://maps.googleapis.com/maps/api/directions/json";
-        // static String baseRoadsUrl = "https://roads.googleapis.com/v1/snapToRoads";
         public static Queue<NavSteps> getDirections(GeospatialPose pose, String destination)
         {
             // Generate the URL to make the API call

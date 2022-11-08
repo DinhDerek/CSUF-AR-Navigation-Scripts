@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 using Google.XR.ARCoreExtensions;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -16,8 +17,6 @@ namespace AR_Fukuoka
         public AREarthManager EarthManager;
         //GeospatialAPI and ARCore initialization and results
         public VpsInitializer Initializer;
-        //UI for displaying results
-        public Text OutputText;
         // Allowable accuracy of azimuth
         public double HeadingThreshold = 25;
         // Allowable accuracy of horizontal position
@@ -30,15 +29,15 @@ namespace AR_Fukuoka
         GameObject displayCurrentStep; // Actual marker object to be displayed
         public ARAnchorManager AnchorManager; // Used to create anchors
         Queue<NavSteps> Steps; // The list of steps of the navigation
-        Queue<(GameObject inter, double latitude, double longitude)> Intermediaries; // The list of intermediary arrows between points
+        Queue<IntermediaryPoint> Intermediaries; // The list of intermediary arrows between points
         NavSteps CurrentStep; // The current step in the navigation
-        (GameObject inter, double latitude, double longitude) CurrentIntermediary; // The closest arrow to the user's position
+        IntermediaryPoint CurrentIntermediary; // The closest arrow to the user's position
         bool Initialized; // Whether or not the navigation has begun
 
         void Start()
         {
             Steps = new Queue<NavSteps>();
-            Intermediaries = new Queue<(GameObject inter, double latitude, double longitude)>();
+            Intermediaries = new Queue<IntermediaryPoint>();
             Initialized = false;
         }
         // Update is called once per frame
@@ -77,34 +76,9 @@ namespace AR_Fukuoka
                 }
             }
             // Display tracking information regardless of navigation progress
-            ShowTrackingInfo(status, pose);
+            string computedDistance = NavigationCalculator.getDistance(pose.Latitude, pose.Longitude, CurrentStep.latitude, CurrentStep.longitude).ToString("F1");
+            UIController.ShowTrackingInfo(Initialized, status, Destination, CurrentStep.htmlStep, computedDistance);
         }
-        
-        void ShowTrackingInfo(string status, GeospatialPose pose)
-        {
-            if (!Initialized) // If the navigation has not been initialized, let the user know that it is pending
-            {
-                OutputText.text = "Loading...\nLow Tracking Accuracy\n";
-            }
-            else if (status == "Destination reached!") // If navigation is complete, simply let the user know
-            {
-                OutputText.text = status;
-            }
-            else // The normal display of information to the user
-            {
-                OutputText.text = string.Format(
-                    "Heading to {0}\n" + 
-                    "{1}\n" +
-                    "{2} meters away\n" +
-                    "{3}\n"
-                    ,
-                    Destination,                   //{0}
-                    CurrentStep.htmlStep,          //{1}
-                    NavigationCalculator.getDistance(pose.Latitude, pose.Longitude, CurrentStep.latitude, CurrentStep.longitude).ToString("F1"),      //{2}
-                    status                         //{3}
-                );
-            }
-        }   
 
         void getIntermediaries(GeospatialPose pose)
         {
@@ -130,7 +104,7 @@ namespace AR_Fukuoka
                 if (currentIntermediary != null)
                 {
                     GameObject displayIntermediary = Instantiate(IntermediaryPrefab, currentIntermediary.transform);
-                    Intermediaries.Enqueue((displayIntermediary, intCoord.latitude, intCoord.longitude));
+                    Intermediaries.Enqueue(new IntermediaryPoint(displayIntermediary, intCoord.latitude, intCoord.longitude));
                 }
             }
         }
