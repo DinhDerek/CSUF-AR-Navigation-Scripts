@@ -30,17 +30,26 @@ namespace AR_Fukuoka
                 if (!string.IsNullOrEmpty(response))
                 {
                     JObject json = JObject.Parse(response);
-                    foreach (JToken jtoken in json.SelectToken("routes[0].legs[0].steps"))
-                    {   
-                        double lat = 0.0;
-                        double lng = 0.0;
-                        String htmlStep = jtoken.SelectToken("html_instructions").ToString().Split("<div")[0];
-                        String polyLine = jtoken.SelectToken("polyline.points").ToString();
+                    Console.WriteLine("STATUS: " + json.SelectToken("status").ToString());
+                    if (json.SelectToken("status").ToString() != "OK")
+                    {
+                        Console.WriteLine("STATUS IS NOT FOUND");
+                        return steps;
+                    }
+                    else
+                    {
+                        foreach (JToken jtoken in json.SelectToken("routes[0].legs[0].steps"))
+                        {   
+                            double lat = 0.0;
+                            double lng = 0.0;
+                            String htmlStep = jtoken.SelectToken("html_instructions").ToString().Split("<div")[0];
+                            String polyLine = jtoken.SelectToken("polyline.points").ToString();
 
-                        double.TryParse(jtoken.SelectToken("end_location.lat").ToString(), out lat);
-                        double.TryParse(jtoken.SelectToken("end_location.lng").ToString(), out lng);
+                            double.TryParse(jtoken.SelectToken("end_location.lat").ToString(), out lat);
+                            double.TryParse(jtoken.SelectToken("end_location.lng").ToString(), out lng);
 
-                        steps.Enqueue(new NavSteps(lat, lng, htmlStep, polyLine));
+                            steps.Enqueue(new NavSteps(lat, lng, htmlStep, polyLine));
+                        }
                     }
                 }
             }
