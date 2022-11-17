@@ -216,6 +216,7 @@ namespace AR_Fukuoka
         {
             Destination = destination;
             RetrievedDestination = true;
+            NavigationManager.getPlaceId(destination);
         }
 
         void reset()
