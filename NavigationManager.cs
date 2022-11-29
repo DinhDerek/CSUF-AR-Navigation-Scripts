@@ -8,7 +8,7 @@ using UnityEngine.UI;
 using Google.XR.ARCoreExtensions;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-namespace AR_Fukuoka
+namespace CSUF_AR_Navigation
 {
     public class NavigationManager
     {
@@ -17,7 +17,7 @@ namespace AR_Fukuoka
         public static Queue<NavSteps> getDirections(GeospatialPose pose, String destination)
         {
             Queue<NavSteps> steps = new Queue<NavSteps>();
-            
+             
             // Generate the URL to make the API call
             String origin = pose.Latitude.ToString() + "," + pose.Longitude.ToString();
             String formattedDest = getPlaceId(destination);
@@ -58,6 +58,33 @@ namespace AR_Fukuoka
                 }
             }
             return steps;
+        }
+
+        public static Queue<IntermediaryPoint> getIntermediaries(NavSteps currentStep)
+        {
+            Queue<IntermediaryPoint> intermediaries = new Queue<IntermediaryPoint>();
+            Queue<Coordinates> interCoords = NavigationManager.DecodePolyline(currentStep.polyLine);
+
+            // Loop through the queue of intermediary points and generate GameObjects from them
+            // Do not get the last set of coords, they overlap with the marker
+            while (interCoords.Count > 1)
+            {
+                Coordinates intCoord = interCoords.Dequeue();
+
+                double heading = 0.0;
+
+                if (interCoords.Count > 2)
+                {
+                    heading = NavigationCalculator.getHeading(intCoord.latitude, intCoord.longitude, interCoords.Peek().latitude, interCoords.Peek().longitude);
+                }
+                else 
+                {
+                    heading = NavigationCalculator.getHeading(intCoord.latitude, intCoord.longitude, currentStep.latitude, currentStep.longitude);
+                }
+                Quaternion quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.up);
+                intermediaries.Enqueue(new IntermediaryPoint(quaternion, intCoord.latitude, intCoord.longitude));
+            }
+            return intermediaries;
         }
 
         public static Queue<Coordinates> DecodePolyline(string polyLine)

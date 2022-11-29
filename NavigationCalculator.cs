@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
-namespace AR_Fukuoka
+namespace CSUF_AR_Navigation
 {
     public class NavigationCalculator
     {

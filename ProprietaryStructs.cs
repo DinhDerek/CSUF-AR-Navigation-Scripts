@@ -8,7 +8,7 @@ using UnityEngine.UI;
 using Google.XR.ARCoreExtensions;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-namespace AR_Fukuoka
+namespace CSUF_AR_Navigation
 {
     public struct Coordinates
     {
@@ -38,12 +38,12 @@ namespace AR_Fukuoka
 
     public struct IntermediaryPoint
     {
-        public GameObject inter;
+        public Quaternion quaternion;
         public double latitude;
         public double longitude;
-        public IntermediaryPoint(GameObject inter, double latitude, double longitude)
+        public IntermediaryPoint(Quaternion quaternion, double latitude, double longitude)
         {
-            this.inter = inter;
+            this.quaternion = quaternion;
             this.latitude = latitude; 
             this.longitude = longitude; 
         }

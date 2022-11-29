@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 using Google.XR.ARCoreExtensions;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-namespace AR_Fukuoka
+namespace CSUF_AR_Navigation
 {
     public class SampleScript : MonoBehaviour
     {
@@ -32,6 +32,7 @@ namespace AR_Fukuoka
         Queue<IntermediaryPoint> Intermediaries; // The list of intermediary arrows between points
         NavSteps CurrentStep; // The current step in the navigation
         IntermediaryPoint CurrentIntermediary; // The closest arrow to the user's position
+        GameObject displayCurrentIntermediary; // Actual intermediary object to be displayed
         bool Initialized; // Whether or not the navigation has begun
         bool NavComplete;
         public static bool RetrievedDestination = false;
@@ -99,36 +100,6 @@ namespace AR_Fukuoka
             }
         }
 
-        void getIntermediaries(GeospatialPose pose)
-        {
-            Queue<Coordinates> interCoords = NavigationManager.DecodePolyline(CurrentStep.polyLine);
-
-            // Loop through the queue of intermediary points and generate GameObjects from them
-            // Do not get the last set of coords, they overlap with the marker
-            while (interCoords.Count > 1)
-            {
-                Coordinates intCoord = interCoords.Dequeue();
-
-                double heading = 0.0;
-
-                if (interCoords.Count > 2)
-                {
-                    heading = NavigationCalculator.getHeading(intCoord.latitude, intCoord.longitude, interCoords.Peek().latitude, interCoords.Peek().longitude);
-                }
-                else 
-                {
-                    heading = NavigationCalculator.getHeading(intCoord.latitude, intCoord.longitude, CurrentStep.latitude, CurrentStep.longitude);
-                }
-                Quaternion quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.up);
-                ARGeospatialAnchor currentIntermediary = AnchorManager.AddAnchor(intCoord.latitude, intCoord.longitude, Altitude, quaternion);
-                if (currentIntermediary != null)
-                {
-                    GameObject displayIntermediary = Instantiate(IntermediaryPrefab, currentIntermediary.transform);
-                    Intermediaries.Enqueue(new IntermediaryPoint(displayIntermediary, intCoord.latitude, intCoord.longitude));
-                }
-            }
-        }
-
         void initializeRouting(GeospatialPose pose)
         {
             Steps = NavigationManager.getDirections(pose, Destination); // Use the navigation manager to make an API call to retrieve the navigation steps
@@ -161,8 +132,14 @@ namespace AR_Fukuoka
                 }
 
                 // After the marker is placed, make an API call to generate the points along the current step and instantiate them as well
-                getIntermediaries(pose);
+                Intermediaries = NavigationManager.getIntermediaries(CurrentStep);
                 CurrentIntermediary = Intermediaries.Dequeue();
+                
+                ARGeospatialAnchor currentIntermediaryAnchor = AnchorManager.AddAnchor(CurrentIntermediary.latitude, CurrentIntermediary.longitude, Altitude, CurrentIntermediary.quaternion);
+                if (currentIntermediaryAnchor != null)
+                {
+                    displayCurrentIntermediary = Instantiate(IntermediaryPrefab, currentIntermediaryAnchor.transform);
+                }
 
                 Initialized = true;
             }
@@ -175,8 +152,8 @@ namespace AR_Fukuoka
             if (Intermediaries.Count > 0) {
                 if (distanceToIntermediary < 3)
                 {
-                    Destroy(CurrentIntermediary.inter);
-                    CurrentIntermediary = Intermediaries.Dequeue();
+                    Destroy(displayCurrentIntermediary);
+                    setCurrentIntermediary();
                 }
             }
             
@@ -194,8 +171,8 @@ namespace AR_Fukuoka
                     double heading = NavigationCalculator.getHeading(CurrentStep.latitude, CurrentStep.longitude, Steps.Peek().latitude, Steps.Peek().longitude);
                     Quaternion quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.up);
 
-                    getIntermediaries(pose);
-                    CurrentIntermediary = Intermediaries.Dequeue();
+                    Intermediaries = NavigationManager.getIntermediaries(CurrentStep);
+                    setCurrentIntermediary();
                 
                     // Create anchors at specified position and orientation
                     ARGeospatialAnchor currentAnchor = AnchorManager.AddAnchor(CurrentStep.latitude, CurrentStep.longitude, Altitude, quaternion);
@@ -209,6 +186,16 @@ namespace AR_Fukuoka
                 {
                     cleanupIntermediaries();
                 }
+            }
+        }
+
+        void setCurrentIntermediary()
+        {
+            CurrentIntermediary = Intermediaries.Dequeue();
+            ARGeospatialAnchor currentIntermediaryAnchor = AnchorManager.AddAnchor(CurrentIntermediary.latitude, CurrentIntermediary.longitude, Altitude, CurrentIntermediary.quaternion);
+            if (currentIntermediaryAnchor != null)
+            {
+                displayCurrentIntermediary = Instantiate(IntermediaryPrefab, currentIntermediaryAnchor.transform);
             }
         }
 
@@ -228,13 +215,7 @@ namespace AR_Fukuoka
 
         void cleanupIntermediaries()
         {
-            do
-            {
-                Destroy(CurrentIntermediary.inter);
-                CurrentIntermediary = Intermediaries.Dequeue();
-            }
-            while (Intermediaries.Count > 0);
-
+            Destroy(displayCurrentIntermediary);
             Intermediaries = new Queue<IntermediaryPoint>();
         }
 
