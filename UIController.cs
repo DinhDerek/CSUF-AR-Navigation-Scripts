@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
-namespace AR_Fukuoka
+namespace CSUF_AR_Navigation
 {
     public class UIController : MonoBehaviour
     {

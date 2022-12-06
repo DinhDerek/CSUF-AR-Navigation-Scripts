@@ -116,11 +116,11 @@ namespace CSUF_AR_Navigation
                 if (Steps.Count > 0)
                 {
                     double heading = NavigationCalculator.getHeading(CurrentStep.latitude, CurrentStep.longitude, Steps.Peek().latitude, Steps.Peek().longitude);
-                    quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.up);
+                    quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.right);
                 }
                 else
                 {
-                    quaternion = Quaternion.AngleAxis(180f - (float)Heading, Vector3.up);
+                    quaternion = Quaternion.AngleAxis(180f - (float)Heading, Vector3.right);
                 }
                 
                 // Once the correct information is gathered, the anchor can then be instantiated
@@ -169,7 +169,7 @@ namespace CSUF_AR_Navigation
                 if (Steps.Count > 0) // If there are additional steps in the navigation, proceed to update them as normal
                 {
                     double heading = NavigationCalculator.getHeading(CurrentStep.latitude, CurrentStep.longitude, Steps.Peek().latitude, Steps.Peek().longitude);
-                    Quaternion quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.up);
+                    Quaternion quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.right);
 
                     Intermediaries = NavigationManager.getIntermediaries(CurrentStep);
                     setCurrentIntermediary();
