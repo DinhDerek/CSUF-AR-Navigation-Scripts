@@ -76,7 +76,7 @@ namespace CSUF_AR_Navigation
                     return;
                 }   
 
-                if (Steps.Count > 0) // If there are more steps in the navigation, continue to update
+                if (displayCurrentStep != null) // If there are more steps in the navigation, continue to update
                 {
                     updateCurrentStep(pose);
                 }
@@ -116,11 +116,11 @@ namespace CSUF_AR_Navigation
                 if (Steps.Count > 0)
                 {
                     double heading = NavigationCalculator.getHeading(CurrentStep.latitude, CurrentStep.longitude, Steps.Peek().latitude, Steps.Peek().longitude);
-                    quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.right);
+                    quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.up);
                 }
                 else
                 {
-                    quaternion = Quaternion.AngleAxis(180f - (float)Heading, Vector3.right);
+                    quaternion = Quaternion.AngleAxis(180f - (float)Heading, Vector3.up);
                 }
                 
                 // Once the correct information is gathered, the anchor can then be instantiated
@@ -150,7 +150,7 @@ namespace CSUF_AR_Navigation
             // This destroys intermediary arrows as the user walks through them so the space isn't cluttered with unnecessary arrows
             double distanceToIntermediary = NavigationCalculator.getDistance(pose.Latitude, pose.Longitude, CurrentIntermediary.latitude, CurrentIntermediary.longitude);
             if (Intermediaries.Count > 0) {
-                if (distanceToIntermediary < 3)
+                if (distanceToIntermediary < 10)
                 {
                     Destroy(displayCurrentIntermediary);
                     setCurrentIntermediary();
@@ -159,17 +159,17 @@ namespace CSUF_AR_Navigation
             
             // This checks if the user has reached the marker, and if the current step should be updated
             double distanceToStep = NavigationCalculator.getDistance(pose.Latitude, pose.Longitude, CurrentStep.latitude, CurrentStep.longitude);
-            if (distanceToStep < 5) // If within 5 meters of the marker, navigation can be updated
+            if (distanceToStep < 10) // If within 10 meters of the marker, navigation can be updated
             {
-                CurrentStep = Steps.Dequeue(); // Dequeue the next step
                 Destroy(displayCurrentStep); // Destroy the display of the current step
                 // Destroy all arrows of the current step to declutter
                 cleanupIntermediaries();
-                
-                if (Steps.Count > 0) // If there are additional steps in the navigation, proceed to update them as normal
+
+                if (Steps.Count > 0)
                 {
+                    CurrentStep = Steps.Dequeue(); // Dequeue the next step
                     double heading = NavigationCalculator.getHeading(CurrentStep.latitude, CurrentStep.longitude, Steps.Peek().latitude, Steps.Peek().longitude);
-                    Quaternion quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.right);
+                    Quaternion quaternion = Quaternion.AngleAxis(180f - (float)heading, Vector3.up);
 
                     Intermediaries = NavigationManager.getIntermediaries(CurrentStep);
                     setCurrentIntermediary();
@@ -182,7 +182,7 @@ namespace CSUF_AR_Navigation
                         displayCurrentStep = Instantiate(MarkerPrefab, currentAnchor.transform);
                     }
                 }
-                else // Otherwise destroy any remaining game objects and do nothing else
+                else 
                 {
                     cleanupIntermediaries();
                 }
@@ -203,7 +203,6 @@ namespace CSUF_AR_Navigation
         {
             Destination = destination;
             RetrievedDestination = true;
-            NavigationManager.getPlaceId(destination);
         }
 
         void reset()

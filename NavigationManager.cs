@@ -20,7 +20,7 @@ namespace CSUF_AR_Navigation
              
             // Generate the URL to make the API call
             String origin = pose.Latitude.ToString() + "," + pose.Longitude.ToString();
-            String formattedDest = getPlaceId(destination);
+            String formattedDest = getPlaceId(pose, destination);
             if (formattedDest != "NOT FOUND")
             {
                 String apiUrl = baseNavigationUrl + "?origin=" + origin + "&destination=place_id:" + formattedDest + "&mode=walking&key=" + apiKey;
@@ -142,10 +142,11 @@ namespace CSUF_AR_Navigation
             return intermediaryCoords;
         }
 
-        public static String getPlaceId(string destination)
+        public static String getPlaceId(GeospatialPose pose, String destination)
         {
             String placeDest = destination.Replace(" ", "%20");
-            String placeUrl = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=place_id&input=" + placeDest + "&inputtype=textquery&key=" + apiKey;
+            String origin = "&point:" + pose.Latitude.ToString() + "," + pose.Longitude.ToString();
+            String placeUrl = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=place_id" + origin + "&input=" + placeDest + "&inputtype=textquery&key=" + apiKey;
             Console.WriteLine("PLACE URL: " + placeUrl);
 
             String placeId = "";
